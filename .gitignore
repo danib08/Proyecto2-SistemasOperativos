@@ -159,17 +159,3 @@ fabric.properties
 
 # End of https://www.toptal.com/developers/gitignore/api/clion
 
-Server_Host_OSP1G/venv/
-
-Server_Host_OSP1G/Images/
-
-Server_Host_OSPIG/.idea/
-
-Server_Client_OSP1G/.idea/
-
-
-Server_Host_OSP1G/h_process_images/
-
-Server_Host_OSP1G/pre_h_process_images/
-
-Server_Host_OSP1G/sequential_images/
