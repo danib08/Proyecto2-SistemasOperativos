@@ -93,29 +93,19 @@ int main() {
     return 0;
 }
 
-/**
- * Funcion que se encarga de atender la solicitud del cliente
- * clientSocket: identificador del socket del cliente
- * id: identificador del proceso que atiende la solicutd
-*/
+
 void childFunction(int clientSocket, int id) {
-    // Apertura del semaforo para control del proceso padre
     sem_t* sem_parent = sem_open(parent_sem, O_RDWR);
 
-    // Procesamiento de la solicitud
     attendRequest(clientSocket, id, folderpath);
 
-    // Indicar al proceso padre de la finalizacion
     sem_post(sem_parent);
     sem_close(sem_parent);
 
     exit(EXIT_SUCCESS);
 }
 
-/**
- * Funcion para manejar la accion realizada cuando el usuario
- * utiliza CTRL+C para detener el proceso padre
-*/
+
 void handle_sigint(int sig) { 
     sem_unlink(parent_sem);
     free(folderpath);

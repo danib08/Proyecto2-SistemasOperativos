@@ -10,7 +10,7 @@
 Image readImage(char* filepath) {
     FILE *pFile = fopen(filepath, "rb");
     if(!pFile) {
-        printf("Error al leer el archivo %s\n", filepath);
+        printf("Error while reading file %s\n", filepath);
         exit(1);
     }
 
@@ -19,7 +19,7 @@ Image readImage(char* filepath) {
     fread(header, 1, len, pFile); 
     int is_png = !png_sig_cmp(header, 0, len); 
     if (!is_png) {
-        printf("Archivo %s no es una imagen en formato png\n", filepath);
+        printf("FIle %s is not a png image\n", filepath);
         fclose(pFile);
         remove(filepath); 
         exit(1);
@@ -29,7 +29,7 @@ Image readImage(char* filepath) {
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_infop info_ptr = png_create_info_struct(png_ptr);
     if(setjmp(png_jmpbuf(png_ptr))) {
-        printf("Error al obtener la informacion del archivo %s\n", filepath);
+        printf("Error while reading file %s\n", filepath);
         fclose(pFile);
         exit(1);
     }
@@ -46,7 +46,7 @@ Image readImage(char* filepath) {
 
 
     if (setjmp(png_jmpbuf(png_ptr))) {
-        printf("Error durante la lectura de los pixeles\n");
+        printf("Error while reading pixels\n");
         fclose(pFile);
         exit(1);
     }
