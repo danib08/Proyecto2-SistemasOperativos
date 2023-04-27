@@ -20,6 +20,7 @@ typedef struct Request {
     Image image;
 } Request;
 
+
 int isPNG(char* filename);
 int sendImage(Image image, int socket);
 char* int2str(int number);
@@ -29,65 +30,66 @@ void* sendRequestsNumber(char* serverIP, int port, int requests);
 
 int main(int argc, char **argv) {
     if(argc != 6) {
-        printf("Debe ingresar ip, puerto, imagen, threads y ciclos como argumentos\n");
+        printf("Error: 2 arguments needed: <ip address>, <port>, <image path>, <n-threads> y <n-cycles>\n");
         return 0;
     }
-    // Direccion IP del servidor
+    // IP direction from server
     char* serverIP = argv[1];
 
-    // Puerto del servidor
+    // Server port
     int port = atoi(argv[2]);
 
-    // Ruta de la imagen
+    // Image path
     char* filepath = argv[3];
     if(!isPNG(filepath)) {
         printf("Imagen debe tener formato png\n");
         return -1;
     }
 
-    // Numero de threads
+    // Number of threads
     int nthreads = atoi(argv[4]);
 
-    // Numero de ciclos
+    // NUmber of cycles
     int ncycles = atoi(argv[5]);
 
-    // Enviar cantidad de solicitudes que seran enviadas
+    // Send requests
     sendRequestsNumber(serverIP, port, nthreads*ncycles);
 
-    // Lectura de la imagen
+    // Read image
     Image image = readImage(filepath); 
 
-    // Creacion del struct para pasar argumentos a los hilos
+    // Struct to pass arguments to threads 
     Request* request = malloc(sizeof(request));
     request->ncycles = ncycles;
     request->port = port;
     request->serverIP = serverIP;
     request->image = image;
 
-    // Creacion de los hilos
+    // Thread creation
     pthread_t threads_id[nthreads];
     for (int i = 0; i < nthreads; i++) {
         pthread_t thread;
         pthread_create(&threads_id[i], NULL, sendRequest, request);
     }
 
-    printf("Todos los hilos creados\n");
+    printf("All threads created successfully\n");
 
-    // Espera a que todos los hilos finalicen
+    // Wait to all threads to be created
     for (int i = 0; i < nthreads; i++)
        pthread_join(threads_id[i], NULL);
         
-    printf("Hilos finalizados\n");
+    printf("Finished crearing threads\n");
 
     return 0;
 }
 
 /**
- * Funcion para enviar una cantidad n de solicitud al servidor
- * requestStruct: struct con los argumentos de la solicitud
+ * Sends n requests to server
+ * requestStruct: struct with request arguments
 */
 void* sendRequest(void* requestStruct){
-    // Parametros de la solicitud
+    
+    // Request parameters
     Request* request = (Request*) requestStruct;
     int ncycles = request->ncycles;
     int port = request->port;
@@ -95,91 +97,92 @@ void* sendRequest(void* requestStruct){
     Image image = request->image;
 
     for (int i = 0; i < ncycles; i++) {
-        // Creacion del socket
+        
+        // Socket creation
         int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
         
         // Configuracion de direccion y puerto del cliente
         struct sockaddr_in serverAddr;
         serverAddr.sin_family = AF_INET;
-        serverAddr.sin_port = htons(port); // Puerto
-        serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Direccion IP del servidor 
+        serverAddr.sin_port = htons(port); // Port
+        serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Server IP address
 
         // Se intenta conectar con el puerto de la direccion ip establecida
         int connectionStatus = connect(clientSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
         
-        // Verificar estado de conexion
+        // Verify connection status
         if (connectionStatus == -1) {
-            printf("Error al intentar conectar con el servidor\n");
+            printf("Error while trying to connect to server\n");
             exit(1);
         }
 
         unsigned char* buffer = (char*) malloc(sizeof(unsigned char)*BUFFER_SIZE);
         while (1) {
-            // Limpieza del buffer
+            // Clean buffer
             memset(buffer, 0, sizeof(unsigned char)*BUFFER_SIZE);
 
-            // Envio del mensaje de inicio
+            // Send start message
             send(clientSocket, START_MSG, BUFFER_SIZE, 0);
 
-            // Envio del archivo
+            // Sending image
             sendImage(image, clientSocket);
             
-            // Envio mensaje de finalizacion
+            // Send end message
             if (!send(clientSocket, END_MSG, sizeof(END_MSG), 0)) {
-                printf("Error al enviar mensaje de finalizacion");
+                printf("Error while finalizing client");
                 break;
             }
-            break;  // BORRAR
+            break; 
         }
-        // Se cierra la conexion con el servidor
+        // Closing client connection
         shutdown(clientSocket, SHUT_RDWR);
     }
 }
 
 /**
- * Funcion para enviar la cantidad de solicitudes 
- * que seran enviadas al servidor
- * requestStruct: struct con los argumentos de la solicitud
+ * Function to send the amount of requests sent to server
+ * requestStruct: struct with request arguments
 */
 void* sendRequestsNumber(char* serverIP, int port, int requests){
-    // Creacion del socket
+    
+    // Socket creation
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     
-    // Configuracion de direccion y puerto del cliente
+    // IP address and port config
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(port); // Puerto
-    serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Direccion IP del servidor 
+    serverAddr.sin_port = htons(port); // Port
+    serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Server IP Address 
 
-    // Se intenta conectar con el puerto de la direccion ip establecida
+    // Tries to connect to established ip address
     if (connect(clientSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        printf("Error al intentar conectar con el servidor\n");
+        printf("Error while trying to connect to server\n");
         exit(1);
     }
 
-    // Envio del mensaje de inicio
+    // Send start message
     char* s_requests = int2str(requests);
     if (!send(clientSocket, s_requests, BUFFER_SIZE, 0)) {
-        printf("Error al enviar mensaje de cantidad de solicitudes");
+        printf("Error while sending requests");
         exit(1);
     }
-    // Se cierra la conexion con el servidor
+    
+    // Close connection
     shutdown(clientSocket, SHUT_RDWR);
     free(s_requests);
 }
 
 /**
- * Funcion para enviar un archivo a un servidor
- * filepath: direccion del archivo que se desea enviar
- * socket: descriptor del socket servidor
- * return: 0 si todo salio bien, -1 en caso contrario
+ * Function to send image to server
+ * return: 0 if completed, -1 otherwise
 */ 
 int sendImage(Image image, int socket) {
-    // Calculo del tamano de la imagen en bytes
+
+    // Calculate image size
     int size = sizeof(int *) * image.rows + sizeof(int) * image.cols * image.rows; 
     char* ssize = int2str(size);
 
-    // Creacion del mensaje que indica datos de la imagen
+    // Stats message creation
     char* rows = int2str(image.rows);
     char* cols = int2str(image.cols); 
     char* aux1 = concat(rows, "*");
@@ -187,7 +190,7 @@ int sendImage(Image image, int socket) {
     char* aux3 = concat(aux1,aux2);
     char* imageData = concat(aux3,ssize);
 
-    // Limpieza de memoria
+    //Clean mem
     free(ssize);
     free(rows);
     free(cols);
@@ -195,9 +198,9 @@ int sendImage(Image image, int socket) {
     free(aux2);
     free(aux3);
     
-    // Envio de los datos de la imagen al servidor
+    // Sends data and stats to server
     if (!send(socket, imageData, BUFFER_SIZE, 0)) {
-        printf("Error al enviar datos del archivo");
+        printf("Error while sending stats");
         exit(1);
     }
     free(imageData);
@@ -208,34 +211,37 @@ int sendImage(Image image, int socket) {
     unsigned char* buffer = (char*) malloc(sizeof(unsigned char)*BUFFER_SIZE);
     char* status = (char*) malloc(sizeof(char)*BUFFER_SIZE);
     
-    // Envio del archivo al servidor
+    // Checks and compares offset and image size
     while (offset < size) {
-        // Limpieza del buffer
+
+        // Buffer clean
         memset(buffer, 0, sizeof(unsigned char)*BUFFER_SIZE);
         memset(status, 0, sizeof(unsigned char)*BUFFER_SIZE);
 
-        // Lectura del archivo
+        // image read
         if((size - offset) < BUFFER_SIZE ) bsize = size - offset;
         memcpy((void*)buffer, (void*)image.data + offset, bsize);
 
         int completed = 0;
 
-        // while para enviar archivo hasta conseguir respuesta exitosa
+        // while to send file until completed
         while (!completed) {
-            //Envio del archivo
+
+            //Send image
             if (!send(socket, buffer, bsize, 0)){
-                printf("Error al enviar chunk del archivo\n");
+                printf("Error while sending chunk\n");
                 free(buffer);
                 free(status);
                 return -1;
             }
-            // Se obtiene la respuesta enviada por el servidor
+
+            // Response from server
             recv(socket, status, BUFFER_SIZE, 0);
             if (strcmp(status, COMPLETE_MSG) == 0) completed = 1;
         }
         offset += BUFFER_SIZE;
     }
-    // Limpieza de memoria
+    // Buffer clean
     free(buffer);
     free(status);
 
@@ -243,16 +249,16 @@ int sendImage(Image image, int socket) {
 }
 
 /**
- * Funcion para verificar que un archivo tiene terminacion .png
- * filename: string con el nombre del archivo
- * return: 1 si es .png, 0 en caso contrario
+ * Verifies png extension
+ * return: 1 if is .png, 0 otherwise
 */ 
 int isPNG(char* filename) {
-    // Se realiza una copia del string original
+
+    //Copies original string
     char * copy = malloc(strlen(filename) + 1);
     strcpy(copy, filename);
 
-    // Se divide el filename utilizando un punto como delimitador
+    // Dividing filename until getting '.'
     char ch[] = ".";
     char * token = strtok(copy, ch);
     while(token != NULL){
