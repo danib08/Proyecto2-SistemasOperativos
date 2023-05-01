@@ -1,5 +1,5 @@
 libs = -lpng -lpthread
-all : client server_seq server_hp server_php
+all: client
 
-client : client.c
+client: client.c
 	gcc client.c $(libs) -o client
