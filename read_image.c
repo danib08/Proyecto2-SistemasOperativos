@@ -2,7 +2,6 @@
 #include <string.h>
 #include <png.h>
 #include <stdlib.h>
-
 #include "matrix.c"
 #include "image.c"
 
@@ -13,27 +12,24 @@ Image readImage(char* filepath) {
         printf("Error while reading file %s\n", filepath);
         exit(1);
     }
-
     int len = 8; 
     char header[len]; 
     fread(header, 1, len, pFile); 
     int is_png = !png_sig_cmp(header, 0, len); 
     if (!is_png) {
-        printf("FIle %s is not a png image\n", filepath);
+        printf("File %s is not a png image\n", filepath);
         fclose(pFile);
         remove(filepath); 
         exit(1);
     }
 
-
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_infop info_ptr = png_create_info_struct(png_ptr);
     if(setjmp(png_jmpbuf(png_ptr))) {
-        printf("Error while reading file %s\n", filepath);
+        printf("Error while gettin image info %s\n", filepath);
         fclose(pFile);
         exit(1);
     }
-
 
     png_init_io(png_ptr, pFile);
     png_set_sig_bytes(png_ptr, len); 
@@ -44,9 +40,8 @@ Image readImage(char* filepath) {
     int number_of_passes = png_set_interlace_handling(png_ptr);
     png_read_update_info(png_ptr, info_ptr);
 
-
     if (setjmp(png_jmpbuf(png_ptr))) {
-        printf("Error while reading pixels\n");
+        printf("Error during pixel read\n");
         fclose(pFile);
         exit(1);
     }
