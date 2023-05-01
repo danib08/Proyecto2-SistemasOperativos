@@ -2,12 +2,39 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
 #include <sys/socket.h>
 
 #include "receive_image.c"
-#include "general_functions.c"
+#include "functions.c"
 
+// Creates directory for image storage
+int createDirectory(char* filepath) {
+    return mkdir(filepath, 0777);
+}
+
+// Creates folder for each server
+char* createFolder(char* server_type) {
+    createDirectory(server_type);
+
+    char *sCounter = NULL;
+    char *name = NULL;
+    int created = -1; 
+    int counter = 0;
+    char* fname = concat(server_type, "/server");
+
+    while (created != 0){
+        counter++;
+        sCounter = int2str(counter);
+        name = concat(fname, sCounter);
+        created = createDirectory(name);
+    }
+    char* folderpath = concat(name, "/");
+    free(name);
+    free(fname);
+    return folderpath;
+}
+
+// Get number of requests sent to server
 int receiveRequestsNumber(int serverSocket) {
     struct sockaddr_in clientAddr;
     unsigned int sin_size = sizeof(clientAddr);
@@ -22,6 +49,7 @@ int receiveRequestsNumber(int serverSocket) {
     return atoi(buffer);
 }
 
+// Receive image and filters it
 void attendRequest(int clientSocket, int id, char* folderpath) {
     unsigned char* buffer = (char*) malloc(sizeof(unsigned char)*BUFFER_SIZE);
     
@@ -50,30 +78,4 @@ void attendRequest(int clientSocket, int id, char* folderpath) {
     free(buffer);
 
     shutdown(clientSocket, SHUT_RDWR);
-}
-
- 
-int createDirectory(char* filepath) {
-    return mkdir(filepath, 0777);
-}
-
-char* createFolder(char* server_type) {
-    createDirectory(server_type);
-
-    char *sCounter = NULL;
-    char *name = NULL;
-    int created = -1; 
-    int counter = 0;
-    char* fname = concat(server_type, "/server");
-
-    while (created != 0){
-        counter++;
-        sCounter = int2str(counter);
-        name = concat(fname, sCounter);
-        created = createDirectory(name);
-    }
-    char* folderpath = concat(name, "/");
-    free(name);
-    free(fname);
-    return folderpath;
 }
