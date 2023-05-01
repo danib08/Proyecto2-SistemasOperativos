@@ -6,8 +6,7 @@
 #include "matrix.c"
 #include "image.c"
 
-int** conv2(int mRows, int mCols, int** matrix, int kRows, int kCols, \
-int kernel[][kCols]);
+int** conv2(int mRows, int mCols, int** matrix, int kRows, int kCols, int kernel[][kCols]);
 void writeImage(char* filename, Image image);
 Image sobel_filter(Image image);
 

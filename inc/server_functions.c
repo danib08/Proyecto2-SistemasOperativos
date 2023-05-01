@@ -54,6 +54,7 @@ int receiveRequestsNumber(int serverSocket) {
     return atoi(buffer);
 }
 
+
 /**
  * Function that manages received requests, filters image
  * clientSocket: client socket id

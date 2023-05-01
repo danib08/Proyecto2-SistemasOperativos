@@ -2,10 +2,13 @@
 #include <string.h>
 #include <png.h>
 #include <stdlib.h>
+
 #include "matrix.c"
 #include "image.c"
 
-
+/**
+ * Reads a png image and returns a matrix with the image representation
+*/ 
 Image readImage(char* filepath) {
     FILE *pFile = fopen(filepath, "rb");
     if(!pFile) {

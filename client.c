@@ -65,7 +65,6 @@ int main(int argc, char **argv) {
     request->port = port;
     request->serverIP = serverIP;
     request->image = image;
-
     // Thread creation
     pthread_t threads_id[nthreads];
     for (int i = 0; i < nthreads; i++) {
@@ -79,7 +78,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < nthreads; i++)
        pthread_join(threads_id[i], NULL);
         
-    printf("Finished crearing threads\n");
+    printf("All threads finished\n");
 
     return 0;
 }

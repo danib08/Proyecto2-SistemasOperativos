@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 /**
  * Function to create a matrix, assigning a space of memory
  * return: matrix pointer
@@ -11,7 +10,7 @@ int** createMatrix(int rows, int cols) {
     int **matrix = (int **)malloc(len); 
     int *ptr = (int *)(matrix + rows);
 
-    //Travel matrix and correct pointer to right direction
+    // Travel matrix and correct pointer to right direction
     for(int i = 0; i < rows; i++) 
         matrix[i] = (ptr + cols * i); 
 
