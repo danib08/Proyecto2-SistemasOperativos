@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-
+/**
+ * Concatenates two string
+*/
 char* concat(const char *s1, const char *s2) {
     const size_t len1 = strlen(s1); 
     const size_t len2 = strlen(s2); 
@@ -13,7 +15,9 @@ char* concat(const char *s1, const char *s2) {
     return result;
 }
 
-
+/**
+ * Converts from integer to string
+*/
 char* int2str(int number) {
     int n = snprintf(NULL, 0, "%d", number);
     char* sNumber = malloc(n+1);

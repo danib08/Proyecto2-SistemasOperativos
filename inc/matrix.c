@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 int** createMatrix(int rows, int cols) {
     int len = sizeof(int *) * rows + sizeof(int) * cols * rows; 
     int **matrix = (int **)malloc(len); 
