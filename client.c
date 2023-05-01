@@ -1,17 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
 #include <pthread.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "functions.c"
-#include "read_image.c"
-#include "constants.c"
+#include "inc/functions.c"
+#include "inc/read_image.c"
+#include "inc/constants.c"
 
 typedef struct Request {
     int ncycles; 
@@ -20,18 +18,19 @@ typedef struct Request {
     Image image;
 } Request;
 
-
 int isPNG(char* filename);
 int sendImage(Image image, int socket);
 char* int2str(int number);
-char* concat(const char *s1, const char *s2);
+char* concat(const char* s1, const char* s2);
 void* sendRequest(void* request);
 void* sendRequestsNumber(char* serverIP, int port, int requests);
 
 int main(int argc, char **argv) {
     if(argc != 6) {
-        printf("Error: 2 arguments needed: <ip address>, <port>, <image path>, <n-threads> y <n-cycles>\n");
-        return 0;
+        printf("\033[1;31m");
+        printf("Error: 5 arguments needed: <ip address>, <port>, <image path>, <n-threads> y <n-cycles>\n");
+        printf("\033[0m");
+        exit(1);
     }
     // IP direction from server
     char* serverIP = argv[1];
@@ -42,14 +41,16 @@ int main(int argc, char **argv) {
     // Image path
     char* filepath = argv[3];
     if(!isPNG(filepath)) {
-        printf("Imagen debe tener formato png\n");
-        return -1;
+        printf("\033[1;31m");
+        printf("Image must be PNG type\n");
+        printf("\033[0m");
+        exit(1);
     }
 
     // Number of threads
     int nthreads = atoi(argv[4]);
 
-    // NUmber of cycles
+    // Number of cycles
     int ncycles = atoi(argv[5]);
 
     // Send requests
@@ -84,6 +85,66 @@ int main(int argc, char **argv) {
 }
 
 /**
+ * Verifies png extension
+ * returns: 1 if is .png, 0 otherwise
+*/ 
+int isPNG(char* filename) {
+
+    //Copies original string
+    char* copy = malloc(strlen(filename) + 1);
+    strcpy(copy, filename);
+
+    // Dividing filename until getting '.'
+    char ch[] = ".";
+    char * token = strtok(copy, ch);
+    while(token != NULL){
+        if(strcmp(token, "png") == 0) {
+            free(copy);
+            return 1;
+        }
+        token = strtok(NULL, ch);
+    }
+    free(copy);
+    return 0;
+}
+
+/**
+ * Function to send the amount of requests sent to server
+*/
+void* sendRequestsNumber(char* serverIP, int port, int requests){
+    
+    // Socket creation
+    int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    
+    // IP address and port config
+    struct sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port); // Port
+    serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Server IP Address 
+
+    // Tries to connect to established ip address
+    if (connect(clientSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
+        printf("\033[1;31m");
+        printf("Error while trying to connect to server\n");
+        printf("\033[0m");
+        exit(1);
+    }
+
+    // Send start message
+    char* s_requests = int2str(requests);
+    if (!send(clientSocket, s_requests, BUFFER_SIZE, 0)) {
+        printf("\033[1;31m");
+        printf("Error while sending requests");
+        printf("\033[0m");
+        exit(1);
+    }
+    
+    // Close connection
+    shutdown(clientSocket, SHUT_RDWR);
+    free(s_requests);
+}
+
+/**
  * Sends n requests to server
  * requestStruct: struct with request arguments
 */
@@ -98,7 +159,7 @@ void* sendRequest(void* requestStruct){
 
     for (int i = 0; i < ncycles; i++) {
         
-        // Socket creation
+        // Creacion de socket
         int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
         
         // Configuracion de direccion y puerto del cliente
@@ -112,7 +173,9 @@ void* sendRequest(void* requestStruct){
         
         // Verify connection status
         if (connectionStatus == -1) {
+            printf("\033[1;31m");
             printf("Error while trying to connect to server\n");
+            printf("\033[0m");
             exit(1);
         }
 
@@ -140,41 +203,8 @@ void* sendRequest(void* requestStruct){
 }
 
 /**
- * Function to send the amount of requests sent to server
- * requestStruct: struct with request arguments
-*/
-void* sendRequestsNumber(char* serverIP, int port, int requests){
-    
-    // Socket creation
-    int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    
-    // IP address and port config
-    struct sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(port); // Port
-    serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Server IP Address 
-
-    // Tries to connect to established ip address
-    if (connect(clientSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        printf("Error while trying to connect to server\n");
-        exit(1);
-    }
-
-    // Send start message
-    char* s_requests = int2str(requests);
-    if (!send(clientSocket, s_requests, BUFFER_SIZE, 0)) {
-        printf("Error while sending requests");
-        exit(1);
-    }
-    
-    // Close connection
-    shutdown(clientSocket, SHUT_RDWR);
-    free(s_requests);
-}
-
-/**
  * Function to send image to server
- * return: 0 if completed, -1 otherwise
+ * returns: 0 if completed, -1 otherwise
 */ 
 int sendImage(Image image, int socket) {
 
@@ -245,29 +275,5 @@ int sendImage(Image image, int socket) {
     free(buffer);
     free(status);
 
-    return 0;
-}
-
-/**
- * Verifies png extension
- * return: 1 if is .png, 0 otherwise
-*/ 
-int isPNG(char* filename) {
-
-    //Copies original string
-    char * copy = malloc(strlen(filename) + 1);
-    strcpy(copy, filename);
-
-    // Dividing filename until getting '.'
-    char ch[] = ".";
-    char * token = strtok(copy, ch);
-    while(token != NULL){
-        if(strcmp(token, "png") == 0) {
-            free(copy);
-            return 1;
-        }
-        token = strtok(NULL, ch);
-    }
-    free(copy);
     return 0;
 }
