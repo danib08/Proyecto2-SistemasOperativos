@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
         printf("\033[0m");
         exit(1);
     }
-    // IP direction from server
+    // IP address from server
     char* serverIP = argv[1];
 
     // Server port

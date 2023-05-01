@@ -2,19 +2,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <semaphore.h>
 #include <fcntl.h>
 
-#include "server_functions.c"
+#include "inc/server_functions.c"
 
 #define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
 char* parent_sem = "/parent_sem_hp";
