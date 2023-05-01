@@ -39,15 +39,20 @@ int main() {
     serverAddr.sin_port = htons(8080); 
     serverAddr.sin_addr.s_addr = INADDR_ANY; 
     
+    // Assign port to coket
     bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
 
+    // Listen to coming connections
     listen(serverSocket, __INT_MAX__);
 
+    // Open semaphore for parent process control
     sem_t* sem_parent = sem_open(parent_sem, O_CREAT, SEM_PERMS, 0);
 
     FILE* pfile = fopen(report_filename, "w");
     fclose(pfile);
     while (1) {
+
+        // Receives amount of request to be sent
         int totalRequests = receiveRequestsNumber(serverSocket);
 
         // start timer
@@ -56,56 +61,75 @@ int main() {
         gettimeofday(&t1, NULL);
 
         int processCount = 0;
+
+        // While to manage requests
         while (1) {
+
+            // Struct that obtains client info
             struct sockaddr_in clientAddr;
             unsigned int sin_size = sizeof(clientAddr);
 
+            // Waits for a client connection and accepts it
             int clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sin_size);
 
             processCount++;
-            if(fork() == 0) { 
+            if(fork() == 0) { //Child process
                 childFunction(clientSocket, processCount); 
                 exit(EXIT_SUCCESS);
 
-            } else { 
-                printf("%d images received!\n", processCount);
+            } else { // Parent process
+                printf("%d Reveived requests!\n", processCount);
                 if (processCount == totalRequests){
+
+                    // Waits for chiled processes to end
                     for (int i = 0; i < processCount; i++) sem_wait(sem_parent);
                     break;
                 }
             }
         }
         
+        // Obtains elapsed time
         gettimeofday(&t2, NULL);
-        elapsedTime = (t2.tv_sec - t1.tv_sec);
+        elapsedTime = (t2.tv_sec - t1.tv_sec); // Seconds
         elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000000.0;   // us to s
         printf("Time: %f s\n", elapsedTime);
 
+        // Update report
         pfile = fopen(report_filename, "a");
         fprintf(pfile, "%d %f ", processCount, elapsedTime);
         fclose(pfile);
     }
 
-
+    // Close connection
     shutdown(serverSocket, SHUT_RDWR);
     
     free(folderpath);
     return 0;
 }
 
-
+/**
+ * Funcion que se encarga de atender la solicitud del cliente
+ * clientSocket: identificador del socket del cliente
+ * id: identificador del proceso que atiende la solicutd
+*/
 void childFunction(int clientSocket, int id) {
+
+    // Open semaphore to control parent process
     sem_t* sem_parent = sem_open(parent_sem, O_RDWR);
 
+    // Requests processing
     attendRequest(clientSocket, id, folderpath);
 
+    // Termiantes parent process
     sem_post(sem_parent);
     sem_close(sem_parent);
 
     exit(EXIT_SUCCESS);
 }
 
-
+/**
+ * FUnction to handle interrupt for parent process
+*/
 void handle_sigint(int sig) { 
     sem_unlink(parent_sem);
     free(folderpath);

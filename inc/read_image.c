@@ -2,7 +2,6 @@
 #include <string.h>
 #include <png.h>
 #include <stdlib.h>
-
 #include "matrix.c"
 #include "image.c"
 
@@ -15,7 +14,6 @@ Image readImage(char* filepath) {
         printf("\033[0m");
         exit(1);
     }
-
     int len = 8; 
     char header[len]; 
     fread(header, 1, len, pFile); 

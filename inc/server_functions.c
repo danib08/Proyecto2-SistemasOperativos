@@ -36,31 +36,45 @@ char* createFolder(char* server_type) {
 
 // Get number of requests sent to server
 int receiveRequestsNumber(int serverSocket) {
+    
+    // Struct to obtain client information
     struct sockaddr_in clientAddr;
     unsigned int sin_size = sizeof(clientAddr);
 
+    // Waits for a client connection
     int clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sin_size);
 
+    // Create buffer 
     unsigned char* buffer = (char*) malloc(sizeof(unsigned char)*BUFFER_SIZE);
     memset(buffer, 0, sizeof(unsigned char)*BUFFER_SIZE);
 
+    // Waits for starting message
     recv(clientSocket, buffer, BUFFER_SIZE, 0);
 
     return atoi(buffer);
 }
 
-// Receive image and filters it
+/**
+ * Function that manages received requests, filters image
+ * clientSocket: client socket id
+ * id: id of process of request
+*/
 void attendRequest(int clientSocket, int id, char* folderpath) {
     unsigned char* buffer = (char*) malloc(sizeof(unsigned char)*BUFFER_SIZE);
     
+    //  BUffer is cleaned
     memset(buffer, 0, sizeof(unsigned char)*BUFFER_SIZE);
     
+    // Waits for starting message
     recv(clientSocket, buffer, BUFFER_SIZE, 0);
 
+    // Image is received
     Image* image = receiveImage(clientSocket);
     
+    // Image is filtered
     Image filtered = sobel_filter(*image);
 
+    // Image saving
     if (id <= 100) {
         char* s_id = int2str(id);
         char* filename = concat(s_id,".png");
@@ -72,10 +86,12 @@ void attendRequest(int clientSocket, int id, char* folderpath) {
         free(filepath);
     }
     
+    // Memory cleanse
     free(image->data);
     free(filtered.data);
     free(image);
     free(buffer);
 
+    // Connection closed
     shutdown(clientSocket, SHUT_RDWR);
 }
